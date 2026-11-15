@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}</style>
+<title>GTPS Cloud Docs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-screen app. Header, chat sidebar + main pane (chat / docs / verifier), status bar. Dark-first teal. */
+:root{
+  --bg:#061110; --panel:#0b1b1a; --panel2:#102524; --line:#173534; --fg:#d7ebe8; --muted:#7c9d99;
+  --accent:#1fd1c8; --accent-ink:#032423; --ok:#3ccf8e; --warn:#f2a93b; --bad:#f06c6c;
+  --user:#12302e; --code-bg:#040c0c; --shadow:0 12px 40px rgba(0,0,0,.45);
+  --s-kw:#7cc7ff; --s-str:#9be28a; --s-num:#f2a93b; --s-cmt:#5f807c; --s-fn:#1fd1c8; --s-lit:#f78c6c;
+  --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#eef6f5; --panel:#ffffff; --panel2:#e4f0ee; --line:#c7dcd9; --fg:#0e2523; --muted:#56726f;
+  --accent:#0a8f89; --accent-ink:#ffffff; --ok:#12804f; --warn:#a86300; --bad:#c23b3b;
+  --user:#d6ece9; --code-bg:#f6fbfa; --shadow:0 12px 40px rgba(14,37,35,.15);
+  --s-kw:#0b6fb8; --s-str:#2f7d1e; --s-num:#a86300; --s-cmt:#7a9591; --s-fn:#0a8f89; --s-lit:#c2410c; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#eef6f5; --panel:#ffffff; --panel2:#e4f0ee; --line:#c7dcd9; --fg:#0e2523; --muted:#56726f;
+  --accent:#0a8f89; --accent-ink:#ffffff; --ok:#12804f; --warn:#a86300; --bad:#c23b3b;
+  --user:#d6ece9; --code-bg:#f6fbfa; --shadow:0 12px 40px rgba(14,37,35,.15);
+  --s-kw:#0b6fb8; --s-str:#2f7d1e; --s-num:#a86300; --s-cmt:#7a9591; --s-fn:#0a8f89; --s-lit:#c2410c; color-scheme:light}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.55 var(--font);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,pre,.mono{font-family:var(--mono)}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:nowrap;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
+.logo{width:34px;height:34px;border-radius:10px;border:1px solid var(--accent);color:var(--accent);display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.brand b{display:block;font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap}
+.brand small{display:block;color:var(--muted);font-size:11px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.burger{display:none;width:34px;height:34px;border:1px solid var(--line);background:var(--panel);border-radius:8px}
+.seg{display:flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.seg button{border:0;background:transparent;padding:5px 11px;border-radius:7px;font-size:12px;font-weight:500;color:var(--fg);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.pill{display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--ok) 55%,var(--line));color:var(--ok);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
+.sel,.btn{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:6px 11px;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.sel{padding-right:6px}.sel select{background:transparent;border:0;font-size:12px;font-weight:500;padding:0 2px;color:var(--fg)}
+.sel select option{background:var(--panel);color:var(--fg)}
+.btn:hover,.seg button:hover:not([aria-selected="true"]){background:var(--panel2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08);background:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:3px 8px;font-size:11px;border-radius:7px}
+.btn[disabled]{opacity:.5;cursor:default}
+.spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+svg.i{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* body */
+.body{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:0}
+.body.nosidebar{grid-template-columns:minmax(0,1fr)}
+.body.nosidebar .side{display:none}
+.side{border-right:1px solid var(--line);padding:14px 14px 14px 0;display:flex;flex-direction:column;gap:10px;min-height:0;background:var(--bg)}
+.side .btn.primary{justify-content:center;padding:9px;font-size:13px}
+.side-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted)}
+.side-meta button{background:none;border:0;color:var(--accent);font-size:11px;padding:0}
+.side input[type=search]{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;font-size:12px}
+.convs{overflow:auto;display:flex;flex-direction:column;gap:3px;min-height:0;flex:1}
+.conv{display:flex;gap:8px;align-items:flex-start;padding:8px 8px;border-radius:9px;border:1px solid transparent;cursor:pointer;position:relative;min-width:0}
+.conv:hover{background:var(--panel)}
+.conv[aria-current="true"]{background:var(--panel2);border-color:var(--line)}
+.conv svg.i{margin-top:3px;color:var(--muted)}
+.conv[aria-current="true"] svg.i{color:var(--accent)}
+.conv .t{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.conv .s{font-size:11px;color:var(--muted);display:block}
+.conv .x{margin-left:auto;border:0;background:none;color:var(--muted);padding:2px 4px;border-radius:5px;opacity:0}
+.conv:hover .x,.conv .x:focus-visible{opacity:1}
+.conv .x:hover{color:var(--bad)}
+.conv-main{min-width:0;flex:1}
+main{min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}
+.view{flex:1;min-height:0;display:flex;flex-direction:column}
+.view[hidden]{display:none}
+
+/* chat */
+.msgs{flex:1;min-height:0;overflow:auto;padding:18px 0 8px;scroll-behavior:auto}
+.thread{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:22px;padding:0 4px}
+.m-user{align-self:flex-end;max-width:min(90%,640px);background:var(--user);border:1px solid var(--line);border-radius:14px 14px 4px 14px;padding:9px 13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.m-ai{display:flex;flex-direction:column;gap:10px;min-width:0}
+.who{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:7px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.who .logo{width:18px;height:18px;border-radius:6px}.who .logo svg{width:11px;height:11px}
+.prose{overflow-wrap:anywhere;min-width:0}
+.prose p{margin:0 0 .7em}.prose ul,.prose ol{margin:0 0 .8em;padding-left:1.4em}.prose li{margin:.2em 0}
+.prose h3,.prose h4,.prose h5{margin:1em 0 .4em;font-size:14px;font-weight:600}
+.prose h3{font-size:15px}
+code.ic{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px;color:var(--accent)}
+.code{margin:.4em 0 .9em;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code-bg)}
+.code figcaption{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--line);background:var(--panel);font-size:11px;color:var(--muted)}
+.code figcaption .lang{color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.code figcaption .sp{flex:1}
+.code pre{margin:0;padding:12px 14px;overflow:auto;font-size:12.5px;line-height:1.6;max-height:460px}
+.code code{white-space:pre;font-family:var(--mono)}
+.k{color:var(--s-kw)}.s{color:var(--s-str)}.n{color:var(--s-num)}.c{color:var(--s-cmt);font-style:italic}.l{color:var(--s-lit)}.f{color:var(--s-fn)}
+.mok{color:var(--s-fn)}
+.mbad{color:var(--bad);text-decoration:underline wavy var(--bad);text-underline-offset:3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--fg);display:inline-flex;gap:6px;align-items:center}
+button.chip:hover{border-color:var(--accent);color:var(--accent)}
+details.meta{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+details.meta>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:12px;font-weight:600}
+details.meta>summary::-webkit-details-marker{display:none}
+details.meta>summary .chev{margin-left:auto;transition:transform .15s}
+details.meta[open]>summary .chev{transform:rotate(90deg)}
+details.meta.warn{border-color:color-mix(in srgb,var(--warn) 60%,var(--line));background:color-mix(in srgb,var(--warn) 7%,var(--panel))}
+details.meta.warn>summary{color:var(--warn)}
+details.meta.good{border-color:color-mix(in srgb,var(--ok) 50%,var(--line))}
+details.meta.good>summary{color:var(--ok)}
+.meta-body{padding:2px 12px 12px;display:flex;flex-direction:column;gap:12px}
+.grp h6{margin:0 0 6px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.grp h6.ok{color:var(--ok)}.grp h6.bad{color:var(--bad)}
+.row{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:12px;flex-wrap:wrap;min-width:0}
+.row .g{font-weight:600;width:12px;flex:none}.row .g.ok{color:var(--ok)}.row .g.bad{color:var(--bad)}
+.row code{font-size:12px;color:var(--fg);overflow-wrap:anywhere}
+.row .mu{color:var(--muted);font-size:11.5px}
+.row button.lnk{border:0;background:none;color:var(--accent);padding:0;font-size:11.5px;text-decoration:underline}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.pend{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px}
+.step .d{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+.note{font-size:12px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+.note.err{color:var(--bad);border-color:var(--bad)}
+.empty{max-width:760px;margin:6vh auto 0;display:flex;flex-direction:column;gap:18px;align-items:flex-start;padding:0 4px}
+.empty h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.2;text-wrap:balance}
+.empty p{margin:0;color:var(--muted);max-width:56ch}
+.sugs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;width:100%}
+.sug{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.45}
+.sug:hover{border-color:var(--accent)}
+.sug small{display:block;color:var(--accent);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.composer{padding:8px 0 4px}
+.cbox{max-width:860px;margin:0 auto;display:flex;align-items:flex-end;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:8px 8px 8px 12px}
+.cbox:focus-within{border-color:var(--accent)}
+.cbox textarea{flex:1;min-width:0;border:0;background:transparent;resize:none;outline:none;max-height:200px;line-height:1.5;padding:5px 0}
+.ibtn{width:34px;height:34px;border-radius:9px;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;flex:none}
+.ibtn:hover{background:var(--panel2);color:var(--fg)}
+.ibtn.rec{color:var(--bad)}
+.hint{max-width:860px;margin:6px auto 0;text-align:center;font-size:11px;color:var(--muted);display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+
+/* docs */
+.docs{flex:1;min-height:0;display:grid;grid-template-columns:320px minmax(0,1fr);gap:0}
+.dlist{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:14px 14px 0 0;gap:10px}
+.dlist input[type=search]{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 10px}
+.cats{display:flex;flex-wrap:wrap;gap:5px}
+.cats button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:2px 10px;font-size:11.5px}
+.cats button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.dscroll{overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:2px;padding-bottom:12px}
+.ditem{display:block;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:8px;padding:7px 9px}
+.ditem:hover{background:var(--panel)}
+.ditem[aria-current="true"]{background:var(--panel2);border-color:var(--line)}
+.ditem b{font-family:var(--mono);font-size:12px;font-weight:500;display:block;overflow-wrap:anywhere}
+.ditem span{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:10px;border:1px solid var(--line);border-radius:5px;padding:0 5px;color:var(--muted);margin-left:5px;font-family:var(--font);vertical-align:1px}
+.ddetail{overflow:auto;min-height:0;padding:18px 0 24px 22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.ddetail h2{margin:0;font-size:18px;font-weight:600}
+.ddetail .sig{font-family:var(--mono);font-size:14px;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto;white-space:nowrap}
+table.pt{border-collapse:collapse;width:100%;font-size:12.5px}
+table.pt th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--line)}
+table.pt td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.form{display:grid;gap:10px;max-width:640px}
+.form label{display:grid;gap:4px;font-size:11.5px;color:var(--muted);font-weight:500}
+.form input,.form textarea,.vtext{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 10px;color:var(--fg);width:100%}
+.form textarea,.vtext{font-family:var(--mono);font-size:12.5px;resize:vertical}
+.banner{border:1px dashed color-mix(in srgb,var(--warn) 60%,var(--line));background:color-mix(in srgb,var(--warn) 6%,transparent);color:var(--fg);padding:9px 12px;border-radius:10px;font-size:12px}
+.banner b{color:var(--warn)}
+.dtools{display:flex;gap:6px;flex-wrap:wrap}
+
+/* verifier */
+.ver{flex:1;min-height:0;overflow:auto;padding:18px 0 24px}
+.vgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;max-width:1200px;margin:0 auto}
+.vcol{display:flex;flex-direction:column;gap:10px;min-width:0}
+.vcol h2{margin:0;font-size:15px}
+.vtext{min-height:340px}
+.vsum{display:flex;gap:8px;flex-wrap:wrap}
+.stat{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 14px;min-width:96px}
+.stat b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:11px;color:var(--muted)}
+.stat.ok b{color:var(--ok)}.stat.bad b{color:var(--bad)}
+.bar{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}.bar .ok{background:var(--ok)}.bar .bad{background:var(--bad)}
+
+.status{display:flex;gap:16px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted);flex-wrap:wrap}
+.status span{display:inline-flex;gap:6px;align-items:center}
+.status .r{margin-left:auto}
+.toast{position:fixed;left:50%;bottom:calc(52px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:9px;font-size:12px;box-shadow:var(--shadow);z-index:40;max-width:90vw}
+.scrim{display:none}
+
+@media (max-width:860px){
+  .burger{display:grid;place-items:center}
+  .brand small,.hide-s{display:none}
+  .seg button span{display:none}
+  .pill{display:none}
+  .top{gap:8px}
+  .body{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;z-index:30;top:0;bottom:0;left:0;width:min(300px,86vw);padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px max(16px,env(safe-area-inset-left,0px));transform:translateX(-102%);transition:transform .2s;border-right:1px solid var(--line);box-shadow:var(--shadow)}
+  .body.nosidebar .side{display:flex}
+  body.drawer .side{transform:none}
+  body.drawer .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:25}
+  .docs{grid-template-columns:minmax(0,1fr)}
+  .dlist{border-right:0;border-bottom:1px solid var(--line);padding:10px 0;max-height:38vh}
+  .docs.picked .dlist{display:none}
+  .ddetail{padding:14px 0}
+  .vgrid{grid-template-columns:minmax(0,1fr)}
+  .vtext{min-height:220px}
+  .status .hide-s{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<script type="text/plain" id="sample-lua">-- Script untuk memberikan efek double gems/exp saat break block dan reduce growtime 50% saat menanam seed dengan Blue Gem Lock
+
+local blueGemLockID = 233 -- ID Blue Gem Lock
+local doubleGemsDuration = 300 -- Durasi efek dalam detik (5 menit)
+
+-- Menyimpan world yang memiliki Blue Gem Lock
+local worldsWithBlueGemLock = {}
+
+-- Function untuk mengecek apakah world memiliki Blue Gem Lock
+local function hasBlueGemLock(worldName)
+    return worldsWithBlueGemLock[worldName] ~= nil
+end
+
+-- Function untuk menambahkan Blue Gem Lock ke world
+local function addBlueGemLockToWorld(worldName)
+    worldsWithBlueGemLock[worldName] = {
+        hasBlueGemLock = true,
+        endTime = os.time() + doubleGemsDuration
+    }
+end
+
+-- Function untuk menghapus Blue Gem Lock dari world setelah durasi habis
+local function checkBlueGemLockExpiry()
+    local currentTime = os.time()
+    for worldName, data in pairs(worldsWithBlueGemLock) do
+        if currentTime >= data.endTime then
+            worldsWithBlueGemLock[worldName] = nil
+        end
+    end
+end
+
+-- Event saat player menempatkan block
+events.onPlaceBlock(function(player, x, y, itemID)
+    if itemID == blueGemLockID then
+        local worldName = player.world.name
+        addBlueGemLockToWorld(worldName)
+        player:sendNotification("Double Gems & EXP + Faster Growtime activated for 5 minutes!", 2)
+        
+        -- Tambahkan efek visual
+        World:useItemEffect(player.netID, blueGemLockID, 0, 0)
+    end
+end)
+
+-- Event saat player break block
+events.onBreakBlock(function(player, x, y, tile)
+    if hasBlueGemLock(player.world.name) then
+        -- Dapatkan tile yang di-break
+        local blockTile = World:getTile(x, y)
+        
+        -- Hitung gems normal
+        local normalGems = World:adjustGems(player, blockTile, 0, 0)
+        
+        -- Berikan gems double
+        local doubleGems = normalGems * 2
+        World:adjustGems(player, blockTile, doubleGems, 1)
+        
+        -- Berikan EXP double (asumsikan 1 gem = 1 EXP)
+        player:addExperience(doubleGems)
+        
+        -- Tampilkan notifikasi
+        player:sendNotification("Double Gems & EXP earned! +" .. doubleGems .. " gems", 2)
+    end
+end)
+
+-- Event saat player menanam seed
+events.onPlaceBlock(function(player, x, y, itemID)
+    if hasBlueGemLock(player.world.name) then
+        -- Cek apakah item yang ditanam adalah seed (bukan block)
+        if itemID >= 100 and itemID < 200 then -- Rentang ID seed di Growtopia
+            -- Kurangi growtime 50%
+            local tile = World:getTile(x, y)
+            if tile then
+                -- Set growtime menjadi setengah dari normal
+                tile:setGrowTime(tile:getGrowTime() / 2)
+                player:sendNotification("Growtime reduced by 50% for this seed!", 2)
+            end
+        end
+    end
+end)
+
+-- Timer untuk cek expiry setiap detik
+timer.every(1000, checkBlueGemLockExpiry)</script>
+
+<div class="app" id="app">
+  <header class="top">
+    <button class="burger" id="burger" aria-label="Buka daftar chat"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="brand">
+      <div class="logo"><svg class="i" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9H7z"/></svg></div>
+      <div style="min-width:0"><b>GTPS Cloud Docs</b><small>Lua API Reference + AI Assistant</small></div>
+    </div>
+    <nav class="seg" id="nav" role="tablist" aria-label="Tampilan">
+      <button role="tab" data-view="chat" aria-selected="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg><span>AI Chat</span></button>
+      <button role="tab" data-view="docs" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg><span>Browse Docs</span></button>
+      <button role="tab" data-view="verifier" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span>Verifier</span></button>
+    </nav>
+    <div class="pill" id="pill"><i></i><span id="pillT">Synced</span></div>
+    <label class="sel hide-s" title="Model untuk chat"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>
+      <select id="tier" aria-label="Model"><option value="quick">Claude Cepat</option><option value="default" selected>Claude Standar</option><option value="complex">Claude Mendalam</option></select></label>
+    <button class="btn hide-s" id="refresh"><svg class="i" viewBox="0 0 24 24" id="refI"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>Refresh</button>
+    <button class="btn" id="theme" aria-label="Ganti tema"><svg class="i" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button>
+  </header>
+
+  <div class="body" id="body">
+    <aside class="side" id="side">
+      <button class="btn primary" id="newchat"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+      <div class="side-meta"><span id="convCount">0 conversations</span><button id="clearAll">Clear all</button></div>
+      <input type="search" id="convSearch" placeholder="Cari percakapan…" aria-label="Cari percakapan">
+      <div class="convs" id="convs"></div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <main>
+      <section class="view" id="v-chat">
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+        <div class="composer">
+          <div class="cbox">
+            <input type="file" id="file" accept=".lua,.txt,text/plain" hidden>
+            <button class="ibtn" id="attach" title="Lampirkan file .lua untuk dianalisis" aria-label="Lampirkan file Lua"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+            <textarea id="input" rows="1" placeholder="Tulis pesan… (Shift+Enter untuk baris baru)" aria-label="Pesan"></textarea>
+            <button class="ibtn" id="mic" title="Dikte suara" aria-label="Dikte suara" hidden><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+            <button class="btn primary" id="send"><svg class="i" viewBox="0 0 24 24"><path d="M5 12l14-7-5 14-2-6z"/></svg><span id="sendT">Send</span></button>
+          </div>
+          <div class="hint"><span>Claude membaca docs GTPS Cloud sebelum menjawab</span><span>Setiap script otomatis diverifikasi</span></div>
+        </div>
+      </section>
+
+      <section class="view" id="v-docs" hidden>
+        <div class="docs" id="docsWrap">
+          <div class="dlist">
+            <input type="search" id="dq" placeholder="Cari method, tag, atau deskripsi…" aria-label="Cari docs">
+            <div class="cats" id="cats"></div>
+            <div class="dscroll" id="dscroll"></div>
+          </div>
+          <div class="ddetail" id="ddetail"></div>
+        </div>
+      </section>
+
+      <section class="view" id="v-ver" hidden>
+        <div class="ver">
+          <div class="vgrid">
+            <div class="vcol">
+              <h2>Script Lua</h2>
+              <textarea class="vtext" id="vin" spellcheck="false" aria-label="Script Lua untuk diverifikasi" placeholder="Tempel script Lua di sini…"></textarea>
+              <div class="dtools">
+                <button class="btn primary" id="vgo">Verifikasi</button>
+                <button class="btn" id="vsample">Muat contoh Blue Gem Lock</button>
+                <button class="btn" id="vfix">Perbaiki dengan AI</button>
+                <button class="btn" id="vclear">Kosongkan</button>
+              </div>
+              <div class="note">Verifier mencocokkan setiap pemanggilan <code class="ic">Type:method()</code> dengan halaman docs. Receiver seperti <code class="ic">player</code>, <code class="ic">tile</code>, <code class="ic">World</code>, <code class="ic">events</code>, dan <code class="ic">timer</code> dikenali otomatis.</div>
+            </div>
+            <div class="vcol" id="vout"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="status">
+    <span><svg class="i" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/></svg><b id="stDocs">0</b> doc pages</span>
+    <span class="hide-s">Source: seed + custom</span>
+    <span class="hide-s">RAG-powered</span>
+    <span class="r" id="stSync">Last indexed: –</span>
+  </footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const uid=()=>Math.random().toString(36).slice(2,10);
+const FENCE='```';
+const ICON={chat:'<svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',x:'<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',chev:'<svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',book:'<svg class="i" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>',shield:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/></svg>',spark:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>',stop:'<svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',send:'<svg class="i" viewBox="0 0 24 24"><path d="M5 12l14-7-5 14-2-6z"/></svg>'};
+
+/* ---------------- Docs (seed + custom) ---------------- */
+const SEED=[
+['World:useItemEffect(netID, itemID, secondNetID, effectDelay)','Menjalankan efek item (visual dan suara) di world.','netID: number - NetID player sumber efek\nitemID: number - ID item yang efeknya dimainkan\nsecondNetID: number - NetID target kedua, 0 jika tidak ada\neffectDelay: number - Jeda efek dalam milidetik','nil','World:useItemEffect(player.netID, 233, 0, 0)','efek effect visual animasi item lock partikel'],
+['World:adjustGems(player, tile, gemsCount, showParticles)','Menyesuaikan jumlah gems yang dikumpulkan player dari sebuah tile. Isi gemsCount 0 untuk membaca nilai bawaan.','player: Player - Player yang memecahkan blok\ntile: Tile - Tile yang dipecahkan\ngemsCount: number - Jumlah gems; 0 untuk nilai bawaan\nshowParticles: number - 1 untuk menampilkan partikel gems','number','local gems = World:adjustGems(player, tile, 0, 0)\nWorld:adjustGems(player, tile, gems * 2, 1)','gems gem drop break hadiah double dua kali'],
+['World:getTile(x, y)','Mengambil objek Tile pada koordinat tertentu. Mengembalikan nil jika di luar world.','x: number - Koordinat X\ny: number - Koordinat Y','Tile | nil','local tile = World:getTile(10, 20)','tile blok block posisi koordinat'],
+['World:setTile(x, y, itemID)','Mengganti foreground tile pada koordinat tertentu dengan item lain.','x: number - Koordinat X\ny: number - Koordinat Y\nitemID: number - ID item pengganti','nil','World:setTile(10, 20, 2)','tile ubah ganti taruh blok place'],
+['World:getPlayers()','Mengambil daftar semua player yang sedang berada di world.','','table<Player>','for _, p in ipairs(World:getPlayers()) do end','player pemain daftar online semua'],
+['World:spawnItem(x, y, itemID, amount)','Menjatuhkan item sebagai drop di koordinat tertentu.','x: number - Koordinat X\ny: number - Koordinat Y\nitemID: number - ID item\namount: number - Jumlah item','nil','World:spawnItem(5, 5, 112, 10)','drop item spawn jatuhkan hadiah'],
+['Player:sendConsoleMessage(text)','Mengirim pesan ke console player.','text: string - Isi pesan, mendukung kode warna','nil','player:sendConsoleMessage("`2Selamat datang!")','pesan message console notifikasi notification kirim chat'],
+['Player:sendTextBubble(text)','Menampilkan gelembung teks di atas kepala player.','text: string - Isi gelembung teks','nil','player:sendTextBubble("Halo!")','bubble teks kepala pesan'],
+['Player:getName()','Mengambil nama tampilan player.','','string','local name = player:getName()','nama name username'],
+['Player:getGems()','Mengambil jumlah gems player saat ini.','','number','local g = player:getGems()','gems gem saldo jumlah'],
+['Player:addGems(amount)','Menambahkan gems ke player.','amount: number - Jumlah gems yang ditambahkan','nil','player:addGems(500)','gems gem tambah hadiah reward'],
+['Player:getLevel()','Mengambil level player.','','number','if player:getLevel() >= 10 then end','level exp experience xp'],
+['Player:hasItem(itemID)','Memeriksa apakah player memiliki item di inventory.','itemID: number - ID item','boolean','if player:hasItem(242) then end','inventory item inventori punya cek'],
+['Player:addItem(itemID, amount)','Menambahkan item ke inventory player.','itemID: number - ID item\namount: number - Jumlah','nil','player:addItem(242, 1)','inventory item tambah berikan'],
+['Player:removeItem(itemID, amount)','Mengurangi item dari inventory player.','itemID: number - ID item\namount: number - Jumlah','nil','player:removeItem(242, 1)','inventory item hapus kurangi ambil'],
+['Player:getWorldName()','Mengambil nama world tempat player berada.','','string','local w = player:getWorldName()','world nama dunia'],
+['Tile:getFG()','Mengambil ID item foreground pada tile.','','number','local id = tile:getFG()','foreground blok fg id'],
+['Tile:getBG()','Mengambil ID item background pada tile.','','number','local id = tile:getBG()','background bg id'],
+['Tile:getPosition()','Mengambil koordinat tile.','','number, number','local x, y = tile:getPosition()','posisi koordinat x y'],
+['events.onPlaceBlock(callback)','Mendaftarkan callback yang dipanggil saat player menempatkan blok. Callback menerima (player, x, y, itemID).','callback: function - function(player, x, y, itemID)','nil','events.onPlaceBlock(function(player, x, y, itemID) end)','pasang place tanam plant seed saat taruh'],
+['events.onBreakBlock(callback)','Mendaftarkan callback yang dipanggil saat player memecahkan blok. Callback menerima (player, x, y, tile).','callback: function - function(player, x, y, tile)','nil','events.onBreakBlock(function(player, x, y, tile) end)','break hancurkan pecah saat gems'],
+['events.onPlayerJoin(callback)','Mendaftarkan callback yang dipanggil saat player masuk ke world. Callback menerima (player).','callback: function - function(player)','nil','events.onPlayerJoin(function(player) end)','masuk join welcome selamat datang'],
+['events.onChat(callback)','Mendaftarkan callback yang dipanggil saat player mengirim chat. Callback menerima (player, text).','callback: function - function(player, text)','nil','events.onChat(function(player, text) end)','chat command perintah teks'],
+['timer.after(delayMs, callback)','Menjalankan callback satu kali setelah jeda tertentu. Mengembalikan handle untuk dibatalkan.','delayMs: number - Jeda dalam milidetik\ncallback: function - Fungsi yang dijalankan','number','local h = timer.after(5000, function() end)','timer delay durasi jeda tunda nanti setelah'],
+['timer.cancel(handle)','Membatalkan timer yang dibuat dengan timer.after.','handle: number - Handle dari timer.after','nil','timer.cancel(h)','batal stop timer hentikan']
+];
+let custom=store.get('gtps.custom',[]);
+let DOCS=[]; let indexedAt=new Date();
+function parseSig(sig){const m=String(sig).trim().match(/^([A-Za-z_]\w*)([:.])([A-Za-z_]\w*)\s*\((.*)\)\s*$/);if(!m)return null;
+  const l=m[1].toLowerCase();const known={world:'World',player:'Player',tile:'Tile',events:'Events',timer:'Timer'};
+  return {recv:m[1],kind:m[2],name:m[3],args:m[4],type:known[l]||m[1]}}
+function parseParams(t){return String(t||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([\w.]+)\s*(?::\s*([\w|?.<>]+))?\s*(?:[-—]\s*(.*))?$/);return m?{n:m[1],t:m[2]||'any',d:m[3]||''}:{n:l,t:'any',d:''}})}
+function buildDocs(){
+  DOCS=[];
+  const add=(r,isCustom)=>{const p=parseSig(r.sig);if(!p)return;DOCS.push({id:p.type+':'+p.name,type:p.type,recv:p.recv,kind:p.kind,name:p.name,sig:r.sig.trim(),desc:r.desc||'',params:parseParams(r.params),ret:r.ret||'nil',ex:r.ex||'',tags:String(r.tags||'').toLowerCase().split(/[\s,]+/).filter(Boolean),custom:isCustom,raw:r})};
+  SEED.forEach(a=>add({sig:a[0],desc:a[1],params:a[2],ret:a[3],ex:a[4],tags:a[5]},false));
+  custom.forEach(r=>add(r,true));
+  indexedAt=new Date();
+}
+const docById=id=>DOCS.find(d=>d.id===id);
+const docLookup=(type,name)=>DOCS.find(d=>d.type===type&&d.name===name);
+
+/* ---------------- Retrieval ---------------- */
+const tok=s=>(String(s).toLowerCase().match(/[a-z0-9_]{3,}/g)||[]);
+function retrieve(q,k=5){
+  const qt=[...new Set(tok(q))];
+  const scored=DOCS.map(d=>{let s=0;const nm=d.name.toLowerCase(),full=(d.recv+d.kind+d.name).toLowerCase(),text=(d.desc+' '+d.type).toLowerCase();
+    for(const t of qt){ if(full.includes(t))s+=5; else if(nm.includes(t))s+=4;
+      if(d.tags.some(g=>g===t))s+=4; else if(d.tags.some(g=>g.includes(t)||(t.length>4&&t.includes(g))))s+=2;
+      if(text.includes(t))s+=1; }
+    return {d,s}}).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,k).map(x=>x.d);
+  for(const id of ['Events:onPlaceBlock','Events:onBreakBlock','Player:sendConsoleMessage']){ if(scored.length>=3)break; const d=docById(id); if(d&&!scored.includes(d))scored.push(d); }
+  return scored;
+}
+function docText(d){return `### ${d.sig}\n${d.desc}\n`+(d.params.length?'Parameter: '+d.params.map(p=>`${p.n} (${p.t}) ${p.d}`).join('; ')+'\n':'')+`Returns: ${d.ret}\nContoh: ${d.ex.replace(/\n/g,' ')}`}
+
+/* ---------------- Verifier ---------------- */
+const STD=new Set(['os','string','math','table','io','utf8','coroutine','debug','json']);
+const STD_M=new Set(['lower','upper','sub','find','match','gsub','gmatch','format','len','rep','byte','char','reverse','insert','concat','sort','unpack','floor','ceil','random','abs','max','min','time','date','clock','tostring','tonumber','pairs','ipairs','remove','encode','decode','pack','trim']);
+function inferType(r){const l=r.toLowerCase();
+  if(l==='world')return'World'; if(l==='events')return'Events'; if(l==='timer')return'Timer'; if(STD.has(l))return'STD';
+  if(/^(p|pl|plr|ply|player|target|owner|admin|other|victim)\d*$/.test(l)||/player$/.test(l))return'Player';
+  if(/^(t|tile|tl)\d*$/.test(l)||/tile$/.test(l))return'Tile';
+  return null}
+const camel=s=>s.replace(/([a-z])([A-Z])/g,'$1 $2').toLowerCase().split(' ');
+function lev(a,b){const m=a.length,n=b.length;const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);for(let j=0;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n]}
+function suggest(type,name){const pool=DOCS.filter(d=>!type||type==='?'||d.type===type);const nt=camel(name);
+  return pool.map(d=>{const shared=camel(d.name).filter(t=>nt.includes(t)).length;return{d,sc:shared*10-lev(name.toLowerCase(),d.name.toLowerCase())/4,shared,dist:lev(name.toLowerCase(),d.name.toLowerCase())}})
+   .filter(x=>x.shared>0||x.dist<=3).sort((a,b)=>b.sc-a.sc).slice(0,2).map(x=>x.d)}
+function checkCall(recv,name){
+  const type=inferType(recv);
+  if(type==='STD')return{status:'std'};
+  if(type){const d=docLookup(type,name); if(d)return{status:'ok',doc:d,type}; if(!DOCS.some(x=>x.name===name)&&STD_M.has(name))return{status:'std'}; return{status:'bad',type}}
+  const d=DOCS.find(x=>x.name===name); if(d)return{status:'ok',doc:d,type:d.type};
+  if(STD_M.has(name))return{status:'std'};
+  return{status:'bad',type:'?'}}
+function verifyCode(code){
+  const calls=[];const lines=String(code).split('\n');
+  lines.forEach((ln,i)=>{
+    const clean=ln.replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,'""').replace(/--.*$/,'');
+    const re=/\b([A-Za-z_]\w*)\s*([:.])\s*([A-Za-z_]\w*)\s*\(/g;let m;
+    while((m=re.exec(clean))){ if(/function\s+$/.test(clean.slice(0,m.index)))continue;
+      const r=checkCall(m[1],m[3]); calls.push({recv:m[1],kind:m[2],name:m[3],line:i+1,...r}); }
+  });
+  const real=calls.filter(c=>c.status!=='std');
+  const groups=new Map();
+  for(const c of real){const key=(c.status==='ok'?c.doc.id:(c.type||'?')+':'+c.name)+'|'+c.status;
+    if(!groups.has(key))groups.set(key,{...c,lines:[],count:0}); const g=groups.get(key);g.lines.push(c.line);g.count++}
+  const gs=[...groups.values()];
+  gs.forEach(g=>{if(g.status==='bad')g.sug=suggest(g.type,g.name)});
+  return{total:real.length,ok:real.filter(c=>c.status==='ok').length,bad:real.filter(c=>c.status==='bad').length,groups:gs}}
+function callLabel(g){return g.status==='ok'?`${g.doc.recv}${g.doc.kind}${g.doc.name}()`:`${g.type&&g.type!=='?'?g.type:g.recv}${g.kind}${g.name}()`}
+function reportHTML(rep,openDefault){
+  if(!rep.total)return'';
+  const okG=rep.groups.filter(g=>g.status==='ok'),badG=rep.groups.filter(g=>g.status==='bad');
+  const cls=rep.bad?'warn':'good';
+  const head=rep.bad?`${rep.bad} of ${rep.total} method calls NOT in docs`:`All ${rep.total} method calls verified`;
+  const icon=rep.bad?'<svg class="i" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>':ICON.shield;
+  const lnk=l=>l.length>4?l.slice(0,4).join(', ')+'…':l.join(', ');
+  const okH=okG.length?`<div class="grp"><h6 class="ok">VERIFIED (${rep.ok})</h6>${okG.map(g=>`<div class="row"><span class="g ok">✓</span><code>${esc(callLabel(g))}</code><span class="mu">→ ${esc(g.doc.sig)} · ${esc(g.doc.type)} · L${lnk(g.lines)}</span><button class="lnk" data-doc="${esc(g.doc.id)}">lihat docs</button></div>`).join('')}</div>`:'';
+  const badH=badG.length?`<div class="grp"><h6 class="bad">NOT IN DOCS (${rep.bad})</h6>${badG.map(g=>`<div class="row"><span class="g bad">✕</span><code>${esc(callLabel(g))}</code><span class="mu">× ${g.count} · L${lnk(g.lines)}</span>${g.sug&&g.sug.length?`<span class="mu">Mungkin maksud: ${g.sug.map(s=>`<button class="lnk" data-doc="${esc(s.id)}">${esc(s.recv+s.kind+s.name)}</button>`).join(', ')}</span>`:'<span class="mu">tidak ada padanan di docs</span>'}</div>`).join('')}</div>`:'';
+  return `<details class="meta ${cls}" ${openDefault?'open':''}><summary>${icon}${esc(head)}${ICON.chev}</summary><div class="meta-body">${okH}${badH}</div></details>`}
+
+/* ---------------- Lua highlighter ---------------- */
+const KW=new Set('and break do else elseif end for function goto if in local not or repeat return then until while'.split(' '));
+const LIT=new Set(['true','false','nil']);
+function highlight(code){
+  const re=/(--\[\[[\s\S]*?\]\]|--[^\n]*)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_]\w*)(\s*)([:.])(\s*)([A-Za-z_]\w*)(?=\s*\()|(\b[A-Za-z_]\w*\b)/g;
+  let out='',last=0,m;
+  while((m=re.exec(code))){
+    out+=esc(code.slice(last,m.index)); last=re.lastIndex;
+    if(m[1])out+=`<span class="c">${esc(m[1])}</span>`;
+    else if(m[2])out+=`<span class="s">${esc(m[2])}</span>`;
+    else if(m[3])out+=`<span class="n">${m[3]}</span>`;
+    else if(m[4]){const before=code.slice(Math.max(0,m.index-9),m.index);
+      if(/function\s+$/.test(before)){out+=esc(m[0]);continue}
+      const r=checkCall(m[4],m[8]);
+      const c=r.status==='bad'?'mbad':r.status==='ok'?'mok':'';
+      const recvC=KW.has(m[4])?'k':'';
+      out+= c?`<span class="${c}" title="${r.status==='bad'?'Tidak ada di docs':esc(r.doc.sig)}">${esc(m[4]+m[5]+m[6]+m[7]+m[8])}</span>`:esc(m[0]) }
+    else if(m[9]){const w=m[9];out+=KW.has(w)?`<span class="k">${w}</span>`:LIT.has(w)?`<span class="l">${w}</span>`:esc(w)}
+  }
+  return out+esc(code.slice(last))}
+
+/* ---------------- Markdown ---------------- */
+let blocks=[];
+function inline(s){return s.split(/(`[^`\n]+`)/).map((p,i)=>{
+  if(i%2)return `<code class="ic">${esc(p.slice(1,-1))}</code>`;
+  return esc(p).replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>').replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:]|$)/g,'$1<em>$2</em>')}).join('')}
+function mdText(t){
+  const L=t.split('\n');let out='',i=0;
+  const isUl=l=>/^\s*[-*•]\s+/.test(l),isOl=l=>/^\s*\d+[.)]\s+/.test(l),isH=l=>/^#{1,4}\s+/.test(l);
+  while(i<L.length){const l=L[i];
+    if(!l.trim()){i++;continue}
+    let m=l.match(/^(#{1,4})\s+(.*)/); if(m){const n=Math.min(5,m[1].length+2);out+=`<h${n}>${inline(m[2])}</h${n}>`;i++;continue}
+    if(isUl(l)){let it='';while(i<L.length&&isUl(L[i])){it+=`<li>${inline(L[i].replace(/^\s*[-*•]\s+/,''))}</li>`;i++}out+=`<ul>${it}</ul>`;continue}
+    if(isOl(l)){let it='';while(i<L.length&&isOl(L[i])){it+=`<li>${inline(L[i].replace(/^\s*\d+[.)]\s+/,''))}</li>`;i++}out+=`<ol>${it}</ol>`;continue}
+    let p=[];while(i<L.length&&L[i].trim()&&!isUl(L[i])&&!isOl(L[i])&&!isH(L[i])){p.push(L[i]);i++}
+    out+=`<p>${p.map(inline).join('<br>')}</p>`}
+  return out}
+function md(src){
+  let out='',last=0,m;const re=/```([\w-]*)[^\S\n]*\n([\s\S]*?)(?:```|$)/g;
+  while((m=re.exec(src))){
+    out+=mdText(src.slice(last,m.index)); last=re.lastIndex;
+    const lang=(m[1]||'text').toLowerCase(),code=m[2].replace(/\n$/,'');const idx=blocks.push({code,lang})-1;
+    const isLua=lang==='lua'||lang==='';
+    out+=`<figure class="code"><figcaption><span class="lang">${esc(lang||'text')}</span><span>${code.split('\n').length} baris</span><span class="sp"></span><button class="btn sm" data-act="copy-block" data-b="${idx}">Salin</button>${isLua?`<button class="btn sm" data-act="dl-block" data-b="${idx}">Unduh</button>`:''}</figcaption><pre><code>${isLua?highlight(code):esc(code)}</code></pre></figure>`;
+    if(m.index+m[0].length>=src.length)break}
+  out+=mdText(src.slice(last)); return out}
+function luaOf(content){const out=[];const re=/```(?:lua)?[^\S\n]*\n([\s\S]*?)```/g;let m;while((m=re.exec(content)))out.push(m[1]);return out}
+
+/* ---------------- State ---------------- */
+const state={view:'chat',activeId:null,convs:[],streaming:false,abort:null,tier:store.get('gtps.tier','default'),convQ:'',docSel:null,docQ:'',docCat:'Semua',docMode:'view',sample:null,dl:null,dict:null,sampleChecked:false,stick:true,confirmClear:false};
+const active=()=>state.convs.find(c=>c.id===state.activeId)||null;
+const saveConvs=()=>store.set('gtps.convs',state.convs.filter(c=>!c.demo||true).map(c=>({...c,msgs:c.msgs.filter(m=>!m.pending||m.content).map(m=>({...m,pending:false}))})));
+function ago(t){const s=(Date.now()-t)/1000;if(s<45)return'just now';if(s<3600)return Math.round(s/60)+'m ago';if(s<86400)return Math.round(s/3600)+'h ago';return Math.round(s/86400)+'d ago'}
+function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+
+/* seed conversations */
+function seedConvs(){
+  const lua=$('#sample-lua').textContent.replace(/^\n+|\n+$/g,'');
+  const now=Date.now();
+  const q1='buat script agar saat blue gem lock dipasang, break block memberi double gems dan exp, dan menanam seed mengurangi growtime 50%';
+  const a1=`Berikut script untuk efek Blue Gem Lock:\n\n${FENCE}lua\n${lua}\n${FENCE}\n\nScript ini akan memberikan:\n\n1. Efek double gems dan exp saat break block di world yang memiliki Blue Gem Lock\n2. Pengurangan growtime 50% saat menanam seed di world yang sama\n\nEfek akan aktif selama 5 menit setelah Blue Gem Lock dipasang.\n\nMethods used:\n\n- \`World:useItemEffect(netID, itemID, secondNetID, effectDelay)\` — Menjalankan efek item di world\n- \`World:adjustGems(player, tile, gemsCount, showParticles)\` — Menyesuaikan gems yang dikumpulkan\n- \`Player:addExperience(amount)\` — Menambahkan experience ke player (diasumsikan)\n- \`Player:sendNotification(text, type)\` — Mengirim notifikasi ke player (diasumsikan)\n- \`timer.every(interval, callback)\` — Menjalankan fungsi secara berkala (diasumsikan)\n\nCatatan: Beberapa method seperti \`Player:addExperience\`, \`timer.every\`, dan method tile operations diasumsikan dari dokumentasi lengkap GTPS Cloud API. Jika method-method ini tidak tersedia, script perlu disesuaikan dengan method yang tersedia di dokumentasi Anda.`;
+  const q2='Buat script Lua yang menampilkan pesan selamat datang saat player masuk world';
+  const a2=`Script ini menyapa setiap player yang masuk ke world:\n\n${FENCE}lua\nevents.onPlayerJoin(function(player)\n    local name = player:getName()\n    player:sendConsoleMessage("\`2Selamat datang di world ini, " .. name .. "!")\n    player:sendTextBubble("Halo, " .. name .. "!")\nend)\n${FENCE}\n\nMethods used:\n\n- \`events.onPlayerJoin(callback)\` — dipanggil saat player masuk\n- \`Player:getName()\` — mengambil nama player\n- \`Player:sendConsoleMessage(text)\` — pesan ke console\n- \`Player:sendTextBubble(text)\` — gelembung teks di atas kepala`;
+  const q3='saya ingin supaya premium lock bisa di tempatkan hanya oleh player yang punya item tertentu';
+  const a3=`Berikut pemeriksaan sederhana saat blok dipasang:\n\n${FENCE}lua\nlocal premiumLockID = 4802\nlocal requiredItem = 242\n\nevents.onPlaceBlock(function(player, x, y, itemID)\n    if itemID == premiumLockID and not player:hasItem(requiredItem) then\n        World:setTile(x, y, 0)\n        player:sendConsoleMessage("\`4Kamu butuh item khusus untuk memasang lock ini.")\n    end\nend)\n${FENCE}\n\nCatatan: ID item di atas hanya contoh. Ganti dengan ID yang sesuai di server Anda.`;
+  const q3b='bisa ditambah supaya admin tetap boleh memasang?';
+  const a3b=`Docs saat ini belum memuat method untuk membaca role admin, jadi saya tidak mengarang pemeriksaannya. Tambahkan dulu halaman docs untuk method role di Browse Docs, lalu minta saya menyesuaikan script. Sementara itu, bagian ini bisa dipakai sebagai kerangka:\n\n${FENCE}lua\n-- TODO(undocumented): cek role admin player\nlocal function isAdmin(player)\n    return false\nend\n${FENCE}`;
+  const mk=(title,pairs,ago_,demo)=>{const t=now-ago_;const msgs=[];pairs.forEach(([q,a])=>{msgs.push({role:'user',content:q,t});msgs.push({role:'assistant',content:a,t,docs:retrieve(q).map(d=>d.id)})});return{id:uid(),title,created:t,updated:t,msgs}};
+  return[mk('buat script agar saat blue gem lock dipasang',[[q1,a1]],5e3),mk('Buat script Lua yang menampilkan pesan selamat datang',[[q2,a2]],180e3),mk('saya ingin supaya premium lock bisa di tempatkan hanya oleh player',[[q3,a3],[q3b,a3b]],480e3)]}
+
+/* ---------------- Rendering: sidebar & chat ---------------- */
+function renderSide(){
+  const q=state.convQ.toLowerCase();
+  const list=state.convs.slice().sort((a,b)=>b.updated-a.updated).filter(c=>!q||c.title.toLowerCase().includes(q));
+  $('#convCount').textContent=`${state.convs.length} conversation${state.convs.length===1?'':'s'}`;
+  $('#clearAll').textContent=state.confirmClear?'Yakin hapus semua?':'Clear all';
+  $('#convs').innerHTML=list.map(c=>`<div class="conv" role="button" tabindex="0" data-c="${c.id}" ${c.id===state.activeId?'aria-current="true"':''}>${ICON.chat}<div class="conv-main"><span class="t">${esc(c.title)}</span><span class="s">${ago(c.updated)} · ${c.msgs.length} msgs</span></div><button class="x" data-del="${c.id}" aria-label="Hapus percakapan">${ICON.x}</button></div>`).join('')||'<div class="note">Tidak ada percakapan.</div>'}
+function msgHTML(m,i,c){
+  if(m.role==='user')return `<div class="m-user">${esc(m.content)}</div>`;
+  const isLast=i===c.msgs.length-1;
+  let h=`<div class="m-ai"><div class="who"><span class="logo"><svg class="i" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9H7z"/></svg></span>GTPS Cloud AI</div>`;
+  const docs=(m.docs||[]).map(docById).filter(Boolean);
+  if(m.pending){
+    h+=`<div class="pend"><div class="step"><span class="d"></span>Mencari di docs…</div>`+(docs.length?`<div class="chips">${docs.map(d=>`<span class="chip mono">${esc(d.recv+d.kind+d.name)}</span>`).join('')}</div>`:'')+(m.content?'':`<div class="step"><span class="d"></span>Claude sedang berpikir…</div>`)+`</div>`;
+    if(m.content)h+=`<div class="prose">${md(m.content)}</div>`;
+    return h+'</div>'}
+  h+=`<div class="prose">${md(m.content||'')}</div>`;
+  if(m.note)h+=`<div class="note ${m.err?'err':''}">${esc(m.note)}</div>`;
+  if(docs.length)h+=`<details class="meta"><summary>${ICON.book}Read ${docs.length} doc page${docs.length>1?'s':''} before answering${ICON.chev}</summary><div class="meta-body"><div class="chips">${docs.map(d=>`<button class="chip mono" data-doc="${esc(d.id)}">${esc(d.recv+d.kind+d.name)}</button>`).join('')}</div></div></details>`;
+  const lua=luaOf(m.content||'');let rep=null;
+  if(lua.length){rep=verifyCode(lua.join('\n'));h+=reportHTML(rep,true)}
+  h+=`<div class="actions"><button class="btn sm" data-act="copy-msg" data-i="${i}">Salin jawaban</button>`;
+  if(lua.length)h+=`<button class="btn sm" data-act="dl-msg" data-i="${i}">Unduh script</button><button class="btn sm" data-act="to-ver" data-i="${i}">Buka di Verifier</button>`;
+  if(rep&&rep.bad)h+=`<button class="btn sm primary" data-act="autofix" data-i="${i}">Perbaiki otomatis (hanya method di docs)</button>`;
+  if(isLast)h+=`<button class="btn sm" data-act="regen">Regenerate</button>`;
+  return h+`</div></div>`}
+const SUGS=[['Event + efek','Buat script agar saat Blue Gem Lock dipasang, break block memberi double gems dan EXP selama 5 menit'],['Welcome','Buat script Lua yang menampilkan pesan selamat datang saat player masuk world'],['Proteksi','Saya ingin premium lock hanya bisa dipasang oleh player yang punya item tertentu'],['Belajar docs','Jelaskan cara kerja World:adjustGems dan beri contoh pemakaiannya']];
+function renderMsgs(){
+  const box=$('#msgs'),c=active();blocks=[];
+  const nearBottom=box.scrollHeight-box.scrollTop-box.clientHeight<120;
+  if(!c||!c.msgs.length){
+    box.innerHTML=`<div class="empty"><div class="logo" style="width:44px;height:44px;border-radius:13px"><svg class="i" style="width:22px;height:22px" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9H7z"/></svg></div><h1>Tanya apa saja soal Lua API GTPS Cloud</h1><p>Claude mencari halaman docs yang relevan, menulis script, lalu memeriksa setiap pemanggilan method terhadap docs. Method yang tidak ada ditandai.</p><div class="sugs">${SUGS.map((s,i)=>`<button class="sug" data-sug="${i}"><small>${s[0]}</small>${esc(s[1])}</button>`).join('')}</div></div>`;return}
+  box.innerHTML=`<div class="thread">${c.msgs.map((m,i)=>msgHTML(m,i,c)).join('')}</div>`;
+  if(state.stick||nearBottom)box.scrollTop=box.scrollHeight}
+function setBusy(b){state.streaming=b;$('#send').innerHTML=b?`${ICON.stop}<span>Stop</span>`:`${ICON.send}<span>Send</span>`;$('#input').disabled=false}
+function renderStatus(){
+  $('#stDocs').textContent=DOCS.length;
+  $('#stSync').textContent='Last indexed: '+indexedAt.toLocaleTimeString('id-ID')+' · '+DOCS.filter(d=>d.custom).length+' custom';
+  const ready=!!state.sample;$('#pillT').textContent=state.sampleChecked?(ready?'Synced · AI siap':'Synced · mode docs'):'Synced';$('#pill').classList.toggle('warn',state.sampleChecked&&!ready)}
+function renderAll(){renderSide();renderMsgs();renderStatus()}
+
+/* ---------------- Sample (AI) ---------------- */
+let sampleP=null;
+function getSample(){ if(!sampleP)sampleP=(async()=>{try{const s=await window.claude?.use?.('sample');state.sample=s||null}catch{state.sample=null}state.sampleChecked=true;renderStatus();return state.sample})();return sampleP}
+const SYSTEM=`Kamu adalah asisten pembuat script Lua untuk GTPS Cloud (Growtopia private server) di sebuah web chat bot dokumentasi. Jawab dalam bahasa yang dipakai pengguna, default Bahasa Indonesia.
+ATURAN:
+1. Gunakan HANYA method yang tercantum di bagian DOKUMENTASI dan DAFTAR SEMUA METHOD. Jangan mengarang method.
+2. Jika fitur butuh method yang tidak ada di docs, tulis komentar "-- TODO(undocumented): ..." di kode dan jelaskan di Catatan. Jangan berpura-pura method itu ada.
+3. Berikan satu blok kode \`\`\`lua yang lengkap dan bisa dijalankan.
+4. Setelah kode tulis: "Script ini akan memberikan:" (daftar bernomor), "Methods used:" (daftar method beserta signature dan fungsinya), lalu "Catatan:" bila ada asumsi.
+5. Singkat dan langsung. Tanpa basa-basi.`;
+function buildInput(c,docs,text){
+  const hist=[];const past=c.msgs.slice(0,-2);
+  for(let i=0;i<past.length-1;i++){const a=past[i],b=past[i+1];if(a.role==='user'&&b.role==='assistant'&&b.content&&!b.err){hist.push({role:'user',content:a.content.slice(0,4000)},{role:'assistant',content:b.content.slice(0,6000)});i++}}
+  const keep=hist.slice(-6);
+  const all=DOCS.map(d=>d.recv+d.kind+d.name).join(', ');
+  const last=`${SYSTEM}\n\n# DAFTAR SEMUA METHOD TERDOKUMENTASI\n${all}\n\n# DOKUMENTASI (hasil pencarian, ${docs.length} halaman)\n${docs.map(docText).join('\n\n')}\n\n# PERMINTAAN\n${text}`;
+  return[...keep,{role:'user',content:last}]}
+function errCopy(e){const m={not_granted:'Izin untuk memakai Claude ditolak. Chat AI dimatikan di tampilan ini, tetapi Browse Docs dan Verifier tetap bisa dipakai.',rate_limited:'Terlalu banyak permintaan atau batas pemakaian tercapai. Coba lagi beberapa saat lagi.',session_expired:'Sesi berakhir. Masuk lagi lalu coba kembali.',sampling_disabled:'Claude tidak tersedia untuk akun ini.',refused:'Claude menolak permintaan ini. Ubah isi permintaannya.',empty_completion:'Claude tidak menghasilkan jawaban. Coba permintaan yang lebih spesifik.',prompt_too_large:'Percakapan terlalu panjang. Mulai chat baru.'};return m[e&&e.code]||'Terjadi gangguan saat meminta jawaban. Coba kirim ulang.'}
+function offlineAnswer(docs,text){
+  const first=docs[0];
+  return `AI belum tersedia di tampilan ini, jadi ini hasil pencarian docs untuk pertanyaanmu.\n\nHalaman yang paling relevan:\n\n${docs.map(d=>`- \`${d.sig}\` — ${d.desc}`).join('\n')}\n`+(first&&first.ex?`\nContoh dari \`${first.recv}${first.kind}${first.name}\`:\n\n${FENCE}lua\n${first.ex}\n${FENCE}\n`:'')}
+async function send(text,{regen=false}={}){
+  if(state.streaming)return; text=(text||'').trim(); if(!text)return;
+  let c=active(); if(!c){c=newConv()}
+  if(!regen){c.msgs.push({role:'user',content:text,t:Date.now()}); if(c.msgs.filter(m=>m.role==='user').length===1)c.title=text.replace(/\s+/g,' ').slice(0,44)}
+  c.updated=Date.now();
+  const ctx=c.msgs.filter(m=>m.role==='user').slice(-3,-1).map(m=>m.content).join(' ').slice(-200);
+  const docs=retrieve(text+' '+ctx);
+  const am={role:'assistant',content:'',pending:true,docs:docs.map(d=>d.id),t:Date.now()};
+  c.msgs.push(am);setBusy(true);state.stick=true;renderAll();
+  const draw=()=>{if(state.activeId===c.id)renderMsgs()};
+  const sample=await getSample();
+  if(!sample){am.content=offlineAnswer(docs,text);am.pending=false;am.note='Mode docs: jawaban dibuat dari pencarian lokal, bukan oleh Claude.';setBusy(false);saveConvs();renderAll();return}
+  const ctl=new AbortController();state.abort=ctl;
+  try{
+    const r=await sample(buildInput(c,docs,text),{cache:false,signal:ctl.signal,modelTier:state.tier,onText:({text:t})=>{am.content=t;draw()}});
+    am.content=r.text;am.pending=false;if(r.truncated)am.note='Jawaban terpotong karena batas panjang. Minta bagian yang lebih kecil.';
+  }catch(e){
+    am.pending=false;
+    if(e&&e.code==='cancelled'){am.content=e.text||am.content||'';am.note='Dihentikan.';if(!am.content){c.msgs.pop()}}
+    else{am.content=(e&&e.text)||am.content||'';am.err=true;am.note=errCopy(e)}
+  }
+  state.abort=null;setBusy(false);c.updated=Date.now();saveConvs();renderAll()}
+function newConv(){const c={id:uid(),title:'Chat baru',created:Date.now(),updated:Date.now(),msgs:[]};state.convs.push(c);state.activeId=c.id;return c}
+
+/* ---------------- Docs view ---------------- */
+const CATS=()=>['Semua',...[...new Set(DOCS.map(d=>d.type))]];
+function filteredDocs(){const q=state.docQ.toLowerCase().trim();let l=DOCS.filter(d=>state.docCat==='Semua'||d.type===state.docCat);
+  if(q){const qt=tok(q);l=l.map(d=>{const hay=(d.sig+' '+d.desc+' '+d.tags.join(' ')).toLowerCase();let s=hay.includes(q)?5:0;qt.forEach(t=>{if(hay.includes(t))s+=2});return{d,s}}).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).map(x=>x.d)}
+  return l}
+function sigHTML(d){const args=d.sig.replace(/^[^(]*\(/,'').replace(/\)\s*$/,'');
+  return `<span class="mok">${esc(d.recv)}</span>${d.kind}<span class="f">${esc(d.name)}</span>(<span class="n">${esc(args)}</span>)`}
+function renderDocs(){
+  $('#cats').innerHTML=CATS().map(c=>`<button data-cat="${c}" aria-pressed="${c===state.docCat}">${c}</button>`).join('');
+  const l=filteredDocs();
+  $('#dscroll').innerHTML=(l.map(d=>`<button class="ditem" data-doc-sel="${esc(d.id)}" ${d.id===state.docSel?'aria-current="true"':''}><b>${esc(d.recv+d.kind+d.name)}${d.custom?'<span class="tag">custom</span>':''}</b><span>${esc(d.desc)}</span></button>`).join(''))||'<div class="note">Tidak ada halaman yang cocok.</div>';
+  const det=$('#ddetail');const wrap=$('#docsWrap');
+  const tools=`<div class="dtools"><button class="btn sm primary" data-dact="new">+ Halaman baru</button><button class="btn sm" data-dact="import">Impor JSON</button><button class="btn sm" data-dact="export">Ekspor JSON</button></div>`;
+  if(state.docMode==='form'){wrap.classList.add('picked');det.innerHTML=formHTML();return}
+  if(state.docMode==='import'){wrap.classList.add('picked');det.innerHTML=`<h2>Impor halaman docs</h2><div class="note">Tempel array JSON. Tiap item: <code class="ic">sig</code>, <code class="ic">desc</code>, <code class="ic">params</code> (satu baris per parameter, format <code class="ic">nama: tipe - deskripsi</code>), <code class="ic">ret</code>, <code class="ic">ex</code>, <code class="ic">tags</code>.</div><textarea class="vtext" id="impText" style="min-height:240px" spellcheck="false" placeholder='[{"sig":"World:foo(a, b)","desc":"…","params":"a: number - …","ret":"nil","ex":"World:foo(1,2)","tags":"foo contoh"}]'></textarea><div class="dtools"><button class="btn primary" data-dact="import-go">Impor</button><button class="btn" data-dact="cancel">Batal</button></div>`;return}
+  const d=docById(state.docSel);
+  if(!d){wrap.classList.remove('picked');det.innerHTML=`<div class="banner"><b>Docs contoh.</b> Halaman di sini adalah set awal yang dibuat dari script contoh dan screenshot. Tambahkan halaman dari dokumentasi GTPS Cloud asli lewat <i>Halaman baru</i> atau <i>Impor JSON</i>, lalu chat dan Verifier akan memakainya.</div>${tools}<div class="note">Pilih sebuah method di daftar untuk melihat parameter, return, dan contoh.</div>`;return}
+  wrap.classList.add('picked');
+  det.innerHTML=`<button class="btn sm" data-dact="back" style="align-self:flex-start;display:none" id="dback">← Daftar</button><div><div class="chips" style="margin-bottom:8px"><span class="chip">${esc(d.type)}</span>${d.custom?'<span class="chip">custom</span>':''}</div><h2 class="mono" style="font-size:17px">${esc(d.recv+d.kind+d.name)}</h2></div><div class="sig">${sigHTML(d)}</div><p style="margin:0">${esc(d.desc)}</p>`+
+  (d.params.length?`<div class="tw"><table class="pt"><thead><tr><th>Parameter</th><th>Tipe</th><th>Keterangan</th></tr></thead><tbody>${d.params.map(p=>`<tr><td class="mono">${esc(p.n)}</td><td class="mono">${esc(p.t)}</td><td>${esc(p.d)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="note">Tanpa parameter.</div>')+
+  `<div><div class="grp"><h6>RETURNS</h6><code class="ic">${esc(d.ret)}</code></div></div>`+(d.ex?`<figure class="code"><figcaption><span class="lang">contoh</span><span class="sp"></span><button class="btn sm" data-dact="copy-ex">Salin</button></figcaption><pre><code>${highlight(d.ex)}</code></pre></figure>`:'')+
+  `<div class="dtools"><button class="btn sm primary" data-dact="ask">Tanya AI tentang method ini</button>${d.custom?`<button class="btn sm" data-dact="edit">Edit</button><button class="btn sm danger" data-dact="del">Hapus</button>`:''}<button class="btn sm" data-dact="back2">Kembali ke daftar</button></div>`+(d.tags.length?`<div class="chips">${d.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:'')}
+function formHTML(r){r=r||state.editRaw||{};return `<h2>${state.editIdx!=null?'Edit halaman docs':'Halaman docs baru'}</h2><div class="form"><label>Signature<input id="f-sig" placeholder="Player:addExperience(amount)" value="${esc(r.sig||'')}"></label><label>Deskripsi<input id="f-desc" value="${esc(r.desc||'')}"></label><label>Parameter (satu baris: nama: tipe - keterangan)<textarea id="f-params" rows="3">${esc(r.params||'')}</textarea></label><label>Return<input id="f-ret" value="${esc(r.ret||'nil')}"></label><label>Contoh kode<textarea id="f-ex" rows="3">${esc(r.ex||'')}</textarea></label><label>Tag (pisahkan spasi)<input id="f-tags" value="${esc(r.tags||'')}"></label><div class="dtools"><button class="btn primary" data-dact="save">Simpan</button><button class="btn" data-dact="cancel">Batal</button></div><div id="f-err" class="note err" hidden></div></div>`}
+
+/* ---------------- Verifier view ---------------- */
+function renderVer(){
+  const code=$('#vin').value;const out=$('#vout');
+  if(!code.trim()){out.innerHTML=`<h2>Hasil verifikasi</h2><div class="note">Tempel script atau muat contoh, lalu tekan Verifikasi.</div>`;return}
+  const rep=verifyCode(code);
+  const pct=rep.total?Math.round(rep.ok/rep.total*100):0;
+  out.innerHTML=`<h2>Hasil verifikasi</h2><div class="vsum"><div class="stat"><b>${rep.total}</b><span>method calls</span></div><div class="stat ok"><b>${rep.ok}</b><span>terverifikasi</span></div><div class="stat bad"><b>${rep.bad}</b><span>tidak ada di docs</span></div><div class="stat"><b>${pct}%</b><span>cakupan docs</span></div></div><div class="bar" role="img" aria-label="${pct}% terverifikasi"><i class="ok" style="width:${rep.total?rep.ok/rep.total*100:0}%"></i><i class="bad" style="width:${rep.total?rep.bad/rep.total*100:0}%"></i></div>${reportHTML(rep,true)||'<div class="note">Tidak ada pemanggilan method yang ditemukan.</div>'}<figure class="code"><figcaption><span class="lang">lua</span><span>garis bergelombang merah = tidak ada di docs</span></figcaption><pre><code>${highlight(code)}</code></pre></figure>`}
+
+/* ---------------- Views ---------------- */
+function setView(v,push=true){
+  state.view=v;$$('#nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===v));
+  $('#v-chat').hidden=v!=='chat';$('#v-docs').hidden=v!=='docs';$('#v-ver').hidden=v!=='verifier';
+  $('#body').classList.toggle('nosidebar',v!=='chat');document.body.classList.remove('drawer');
+  if(v==='docs')renderDocs(); if(v==='verifier')renderVer(); if(v==='chat')renderMsgs();
+  if(push){try{history.replaceState(null,'','#'+(v==='verifier'?'verifier':v))}catch{}}}
+function openDoc(id){state.docSel=id;state.docMode='view';state.docQ='';$('#dq').value='';state.docCat='Semua';setView('docs');
+  setTimeout(()=>{const el=$(`[data-doc-sel="${CSS.escape(id)}"]`);el&&el.scrollIntoView({block:'nearest'})},0)}
+async function saveFile(name,data){
+  if(!state.dl){try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain'}));a.download=name;document.body.append(a);a.click();a.remove();toast('Diunduh: '+name)}catch{toast('Unduhan tidak tersedia')}return}
+  try{const r=await state.dl.save({filename:name,data});if(r.status==='saved')toast('Tersimpan: '+name)}catch(e){if(e&&e.code!=='declined')toast('Tidak bisa menyimpan file ini')}}
+async function copy(text){try{await navigator.clipboard.writeText(text);toast('Disalin')}catch{
+  const ta=document.createElement('textarea');ta.value=text;document.body.append(ta);ta.select();try{document.execCommand('copy');toast('Disalin')}catch{toast('Salin manual dengan Ctrl+C')}ta.remove()}}
+
+/* ---------------- Events ---------------- */
+const input=$('#input');
+function grow(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,200)+'px'}
+input.addEventListener('input',grow);
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();doSend()}});
+function doSend(){if(state.streaming){state.abort&&state.abort.abort();return}const t=input.value;if(!t.trim())return;input.value='';grow();send(t)}
+$('#send').onclick=doSend;
+$('#newchat').onclick=()=>{state.activeId=null;state.stick=true;if(state.streaming){}renderAll();document.body.classList.remove('drawer');input.focus()};
+$('#convSearch').oninput=e=>{state.convQ=e.target.value;renderSide()};
+$('#clearAll').onclick=()=>{if(!state.confirmClear){state.confirmClear=true;renderSide();setTimeout(()=>{state.confirmClear=false;renderSide()},3500);return}
+  if(state.streaming)state.abort&&state.abort.abort();state.convs=[];state.activeId=null;state.confirmClear=false;saveConvs();renderAll()};
+$('#convs').addEventListener('click',e=>{const del=e.target.closest('[data-del]');
+  if(del){e.stopPropagation();const id=del.dataset.del;if(state.streaming&&state.activeId===id)state.abort&&state.abort.abort();state.convs=state.convs.filter(c=>c.id!==id);if(state.activeId===id)state.activeId=null;saveConvs();renderAll();return}
+  const it=e.target.closest('[data-c]');if(it){state.activeId=it.dataset.c;state.stick=true;renderAll();document.body.classList.remove('drawer')}});
+$('#convs').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-c]')){e.preventDefault();e.target.click()}});
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)setView(b.dataset.view)});
+$('#burger').onclick=()=>document.body.classList.toggle('drawer');$('#scrim').onclick=()=>document.body.classList.remove('drawer');
+$('#tier').value=state.tier;$('#tier').onchange=e=>{state.tier=e.target.value;store.set('gtps.tier',state.tier)};
+$('#refresh').onclick=()=>{const i=$('#refI');i.classList.add('spin');setTimeout(()=>{buildDocs();i.classList.remove('spin');renderStatus();if(state.view==='docs')renderDocs();toast('Docs di-index ulang: '+DOCS.length+' halaman')},650)};
+function applyTheme(t){document.documentElement.dataset.theme=t;store.set('gtps.theme',t)}
+$('#theme').onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');applyTheme(cur==='light'?'dark':'light')};
+{const t=store.get('gtps.theme',null);if(t)document.documentElement.dataset.theme=t}
+$('#attach').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=await f.text();input.value=(input.value?input.value+'\n':'Periksa dan jelaskan script ini:\n')+FENCE+'lua\n'+t.slice(0,60000)+'\n'+FENCE+'\n';grow();input.focus();toast('Dilampirkan: '+f.name);e.target.value=''};
+$('#msgs').addEventListener('scroll',e=>{const b=e.target;state.stick=b.scrollHeight-b.scrollTop-b.clientHeight<80},{passive:true});
+
+$('#msgs').addEventListener('click',e=>{
+  const s=e.target.closest('[data-sug]');if(s){send(SUGS[+s.dataset.sug][1]);return}
+  const dd=e.target.closest('[data-doc]');if(dd){openDoc(dd.dataset.doc);return}
+  const a=e.target.closest('[data-act]');if(!a)return;const c=active();
+  const act=a.dataset.act;
+  if(act==='copy-block')copy(blocks[+a.dataset.b].code);
+  else if(act==='dl-block')saveFile('gtps-script.lua.txt',blocks[+a.dataset.b].code);
+  else if(act==='copy-msg')copy(c.msgs[+a.dataset.i].content);
+  else if(act==='dl-msg')saveFile('gtps-script.lua.txt',luaOf(c.msgs[+a.dataset.i].content).join('\n\n'));
+  else if(act==='to-ver'){$('#vin').value=luaOf(c.msgs[+a.dataset.i].content).join('\n\n');setView('verifier')}
+  else if(act==='autofix'){const m=c.msgs[+a.dataset.i];const rep=verifyCode(luaOf(m.content).join('\n'));const bad=[...new Set(rep.groups.filter(g=>g.status==='bad').map(callLabel))];
+    send(`Script sebelumnya memakai method yang tidak ada di docs: ${bad.join(', ')}. Tulis ulang script yang sama dan pakai HANYA method yang terdokumentasi. Untuk bagian yang tidak bisa dilakukan dengan docs saat ini, beri komentar TODO(undocumented) dan jelaskan alternatifnya.`)}
+  else if(act==='regen'){if(state.streaming)return;const last=c.msgs.length-1;if(c.msgs[last].role==='assistant'&&last>0&&c.msgs[last-1].role==='user'){const t=c.msgs[last-1].content;c.msgs.pop();send(t,{regen:true})}}
+});
+$('#vout').addEventListener('click',e=>{const dd=e.target.closest('[data-doc]');if(dd)openDoc(dd.dataset.doc);const b=e.target.closest('[data-b]')});
+$('#vgo').onclick=renderVer;$('#vin').addEventListener('input',()=>{clearTimeout(renderVer.t);renderVer.t=setTimeout(renderVer,350)});
+$('#vsample').onclick=()=>{$('#vin').value=$('#sample-lua').textContent.replace(/^\n+|\n+$/g,'');renderVer()};
+$('#vclear').onclick=()=>{$('#vin').value='';renderVer()};
+$('#vfix').onclick=()=>{const code=$('#vin').value.trim();if(!code){toast('Tempel script dulu');return}const rep=verifyCode(code);const bad=[...new Set(rep.groups.filter(g=>g.status==='bad').map(callLabel))];
+  setView('chat');state.activeId=null;send(`Tulis ulang script berikut dan pakai HANYA method yang terdokumentasi.${bad.length?' Method yang tidak ada di docs: '+bad.join(', ')+'.':''} Untuk bagian yang tidak bisa, beri komentar TODO(undocumented).\n\n${FENCE}lua\n${code}\n${FENCE}`)};
+
+/* docs events */
+$('#dq').oninput=e=>{state.docQ=e.target.value;state.docMode='view';renderDocs()};
+$('#cats').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(b){state.docCat=b.dataset.cat;renderDocs()}});
+$('#dscroll').addEventListener('click',e=>{const b=e.target.closest('[data-doc-sel]');if(b){state.docSel=b.dataset.docSel;state.docMode='view';renderDocs()}});
+$('#ddetail').addEventListener('click',e=>{const b=e.target.closest('[data-dact]');if(!b)return;const a=b.dataset.dact;const d=docById(state.docSel);
+  if(a==='new'){state.docMode='form';state.editIdx=null;state.editRaw=null;renderDocs()}
+  else if(a==='cancel'||a==='back'||a==='back2'){state.docMode='view';if(a!=='cancel')state.docSel=null;renderDocs()}
+  else if(a==='import'){state.docMode='import';renderDocs()}
+  else if(a==='export'){saveFile('gtps-docs.json',JSON.stringify([...SEED.map(s=>({sig:s[0],desc:s[1],params:s[2],ret:s[3],ex:s[4],tags:s[5]})),...custom],null,2))}
+  else if(a==='import-go'){try{const arr=JSON.parse($('#impText').value);if(!Array.isArray(arr))throw 0;let n=0;arr.forEach(r=>{if(r&&parseSig(r.sig)){custom.push({sig:String(r.sig),desc:String(r.desc||''),params:String(r.params||''),ret:String(r.ret||'nil'),ex:String(r.ex||''),tags:String(r.tags||'')});n++}});store.set('gtps.custom',custom);buildDocs();state.docMode='view';renderDocs();renderStatus();toast(n+' halaman diimpor')}catch{toast('JSON tidak valid. Pastikan berupa array objek.')}}
+  else if(a==='save'){const raw={sig:$('#f-sig').value.trim(),desc:$('#f-desc').value.trim(),params:$('#f-params').value,ret:$('#f-ret').value.trim()||'nil',ex:$('#f-ex').value,tags:$('#f-tags').value};
+    const p=parseSig(raw.sig);if(!p){const er=$('#f-err');er.hidden=false;er.textContent='Signature harus berbentuk Type:method(args) atau events.nama(args).';return}
+    if(state.editIdx!=null)custom[state.editIdx]=raw;else custom.push(raw);store.set('gtps.custom',custom);buildDocs();state.docSel=p.type+':'+p.name;state.docMode='view';renderDocs();renderStatus();toast('Halaman disimpan')}
+  else if(a==='del'&&d){const i=custom.findIndex(r=>parseSig(r.sig)&&parseSig(r.sig).type+':'+parseSig(r.sig).name===d.id);if(i>=0){custom.splice(i,1);store.set('gtps.custom',custom);buildDocs();state.docSel=null;renderDocs();renderStatus();toast('Halaman dihapus')}}
+  else if(a==='edit'&&d){state.editIdx=custom.findIndex(r=>r===d.raw||r.sig===d.raw.sig);state.editRaw=d.raw;state.docMode='form';renderDocs()}
+  else if(a==='copy-ex'&&d)copy(d.ex);
+  else if(a==='ask'&&d){setView('chat');state.activeId=null;send(`Jelaskan cara kerja ${d.recv}${d.kind}${d.name} dan beri contoh pemakaian yang praktis.`)}});
+
+/* ---------------- Init ---------------- */
+buildDocs();
+state.convs=store.get('gtps.convs',null)||seedConvs();
+if(!state.convs.length&&!store.get('gtps.convs',null))state.convs=seedConvs();
+state.activeId=state.convs.slice().sort((a,b)=>b.updated-a.updated)[0]?.id||null;
+{const h=(location.hash||'').slice(1);if(['docs','verifier'].includes(h))state.view=h}
+addEventListener('hashchange',()=>{const h=(location.hash||'').slice(1);setView(['docs','verifier'].includes(h)?h:'chat',false)});
+$('#vin').value='';
+setView(state.view,false);renderAll();
+setInterval(renderSide,60000);
+(async()=>{
+  getSample();
+  try{state.dl=await window.claude?.use?.('downloads')||null}catch{}
+  try{const d=await window.claude?.use?.('dictation');if(d){state.dict=d;const mic=$('#mic');mic.hidden=false;
+    d.onFinal(({text})=>{input.value=(input.value?input.value:'')+(input.value?text:text.trimStart());grow()});
+    d.onState(({state:s})=>mic.classList.toggle('rec',s==='listening'||s==='starting'));
+    mic.onclick=()=>{d.active()?d.stop().catch(()=>{}):d.start().catch(e=>{if(e&&e.code==='not_granted')toast('Izin mikrofon ditolak')})}}}catch{}
+})();
+})();
+</script>
+
+</html>
